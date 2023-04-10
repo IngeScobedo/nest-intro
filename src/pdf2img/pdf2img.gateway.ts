@@ -31,12 +31,13 @@ export class Pdf2imgGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('pdf2img')
-  pdf2img(client: Socket, data: CreatePdf2imgDto) {
-    console.log('-----PDF2IMG-----', { data });
+  async pdf2img(client: Socket, data: CreatePdf2imgDto) {
     client.join(data.room);
-    client.emit('extract-qr', { files: data.files });
-
-    this.wss.to(data.room).emit('received-files', 'RECIBIDOS');
+    // client.emit('extract-qr', { files: data.files });
+    const { isConverted } = await this.pdf2imgService.pdf2img(data.file);
+    console.log('IS CONVERTED', isConverted);
+    // console.log('QR CODE EXTRACTED', qrCode);
+    this.wss.to(data.room).emit('received-files', 'isConverted');
   }
 
   @SubscribeMessage('extract-qr')
