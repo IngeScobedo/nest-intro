@@ -6,6 +6,7 @@ import { Pdf2imgModule } from './pdf2img/pdf2img.module';
 import { PlaywrightModule } from 'nestjs-playwright';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -15,12 +16,13 @@ import { join } from 'path';
     Pdf2imgModule,
     PlaywrightModule.forRoot({
       headless: true,
-      channel: 'chrome',
+      channel: 'chromium',
       isGlobal: true,
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client'),
     }),
+    ConfigModule.forRoot(),
   ],
   controllers: [],
   providers: [],

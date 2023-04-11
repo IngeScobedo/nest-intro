@@ -4,6 +4,12 @@ import { AppModule } from './app.module';
 import { WebSocketServerOptions } from '@nestjs/websockets';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
+const URL =
+  process.env.NODE_ENV === 'dev'
+    ? 'http://localhost:5174'
+    : 'https://serviciosdefacturacionenlinea.com.mx/';
+console.log(URL);
+
 export class SocketAdapter extends IoAdapter {
   createIOServer(
     port: 3000,
@@ -15,7 +21,7 @@ export class SocketAdapter extends IoAdapter {
     const server = super.createIOServer(port, {
       ...options,
       cors: {
-        origin: 'http://localhost:5174',
+        origin: URL,
         methods: ['GET', 'POST'],
       },
     });
@@ -25,7 +31,12 @@ export class SocketAdapter extends IoAdapter {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const whitelist = ['http://localhost:5174', '*'];
+  const whitelist = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    '*',
+    'https://serviciosdefacturacionenlinea.com.mx/',
+  ];
   app.enableCors({
     origin: function (origin, callback) {
       if (whitelist.indexOf(origin) !== -1) {
