@@ -33,22 +33,43 @@ export class Pdf2imgGateway implements OnGatewayInit {
   @SubscribeMessage('pdf2img')
   async pdf2img(client: Socket, data: CreatePdf2imgDto) {
     client.join(data.room);
-    // client.emit('extract-qr', { files: data.files });
+
+    // Convert pdf to image and validate if isConverted is true
+    // ! image needs rename with a hash
     const { isConverted } = await this.pdf2imgService.pdf2img(data.file);
-    console.log('IS CONVERTED', isConverted);
-    // console.log('QR CODE EXTRACTED', qrCode);
-    this.wss.to(data.room).emit('received-files', 'isConverted');
+    if (!isConverted) {
+      this.wss
+        .to(data.room)
+        .emit('error-processing', 'Ocurrio un problema (ERRCODE: PDI001)'); // ! Documentar errors de codigo
+      return;
+    }
+
+    // extract url of qrcode
+    const { error, qrCodeText } = await this.pdf2imgService.extractQrLink();
+    if (error) {
+      this.wss
+        .to(data.room)
+        .emit('error-processing', 'Ocurrio un problema (ERRCODE: PDI002)'); // ! Documentar errors de codigo
+      return;
+    }
+
+    // Get informacion of user from SAT
+    const user = await this.pdf2imgService.getUserInfo(qrCodeText);
+    console.log('INFORMACION DEL USUARIO', user);
+    if (!user) {
+      this.wss
+        .to(data.room)
+        .emit('error-processing', 'Ocurrio un problema (ERRCODE: PDI003)'); // ! Documentar errors de codigo
+      return;
+    }
+
+    this.wss.to(data.room).emit('finishpdf2img', user);
   }
 
-  @SubscribeMessage('extract-qr')
-  findAll(client: Socket, images: { files: FileList }) {
-    console.log('EXTRACT QR', images);
+  @SubscribeMessage('getInfo')
+  findAll(client: Socket, link: string) {
+    console.log('EXTRACT INFORMATION OF SAT', link);
     // return this.pdf2imgService.findAll();
-  }
-
-  @SubscribeMessage('findOnePdf2img')
-  findOne(@MessageBody() id: number) {
-    return this.pdf2imgService.findOne(id);
   }
 
   @SubscribeMessage('updatePdf2img')
